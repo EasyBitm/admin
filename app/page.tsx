@@ -7,7 +7,9 @@ import {
   createSubject,
   deleteSubject,
   getSemesters,
+  getSiteSettings,
   updateSemester,
+  updateSiteSettings,
   updateSubject,
   type Difficulty,
   type Semester,
@@ -22,19 +24,22 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [overallSyllabusUrl, setOverallSyllabusUrl] = useState("");
+  const [courseStructureUrl, setCourseStructureUrl] = useState("");
+  const [uploadingCourseStructure, setUploadingCourseStructure] = useState(false);
   const [uploadingSyllabus, setUploadingSyllabus] = useState(false);
   const [newSubject, setNewSubject] = useState({ name: "", code: "", chapters: 1, difficulty: "Medium" as Difficulty });
 
   async function load() {
     setError("");
     try {
-      const next = await getSemesters();
+      const [next, settings] = await Promise.all([getSemesters(), getSiteSettings()]);
       setSemesters(next);
       const nextSelectedId = selectedId ?? next[0]?.id ?? null;
       setSelectedId((current) => current ?? next[0]?.id ?? null);
       setOverallSyllabusUrl(
         next.find((semester) => semester.id === nextSelectedId)?.overall_syllabus_url ?? "",
       );
+      setCourseStructureUrl(settings.course_structure_url ?? "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load content.");
     } finally {
@@ -77,6 +82,20 @@ export default function AdminDashboard() {
     }));
   }
 
+  async function uploadCourseStructure(file: File | undefined) {
+    if (!file) return;
+    setUploadingCourseStructure(true);
+    setError("");
+    try { setCourseStructureUrl(await uploadResourceFile(file)); }
+    catch (err) { setError(err instanceof Error ? err.message : "Upload failed."); }
+    finally { setUploadingCourseStructure(false); }
+  }
+
+  async function saveCourseStructure(event: React.FormEvent) {
+    event.preventDefault();
+    await run(() => updateSiteSettings({ course_structure_url: courseStructureUrl.trim() || null }));
+  }
+
   async function addSubject(event: React.FormEvent) {
     event.preventDefault();
     if (!selected || !newSubject.name.trim() || !newSubject.code.trim()) return;
@@ -97,6 +116,15 @@ export default function AdminDashboard() {
         <div><p className="text-sm font-semibold uppercase tracking-widest text-accent">easyBITM</p><h1 className="mt-2 text-3xl font-bold">Admin dashboard</h1><p className="mt-2 text-sm text-muted">Manage the content shown in the student app.</p></div>
         <button onClick={() => void load()} className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-surface"><Save size={15} className="mr-2 inline" />Refresh</button>
       </header>
+      <form onSubmit={saveCourseStructure} className="mb-6 rounded-xl border border-border bg-surface p-4">
+        <h2 className="font-semibold">BITM course structure</h2>
+        <p className="mt-1 text-sm text-muted">Add the course structure PDF shown beside Semesters on the homepage.</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+          <input value={courseStructureUrl} onChange={(event) => setCourseStructureUrl(event.target.value)} disabled={uploadingCourseStructure} placeholder="PDF URL (or upload a file)" className="rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+          <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted hover:bg-background"><Upload size={14} />{uploadingCourseStructure ? "Uploading…" : "Upload PDF"}<input type="file" accept="application/pdf" disabled={uploadingCourseStructure} onChange={(event) => void uploadCourseStructure(event.target.files?.[0])} className="hidden" /></label>
+          <button type="submit" disabled={uploadingCourseStructure} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50">Save structure</button>
+        </div>
+      </form>
       {error && <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">{error}</div>}
       {loading ? <p className="text-sm text-muted">Loading content…</p> : (
         <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">

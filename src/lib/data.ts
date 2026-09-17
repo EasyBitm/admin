@@ -22,6 +22,19 @@ export type Semester = {
   subjects: Subject[];
 };
 
+export type SiteSettings = { id: string; course_structure_url: string | null };
+
+export async function getSiteSettings(): Promise<SiteSettings> {
+  const { data, error } = await supabase.from("site_settings").select("*").eq("id", "global").maybeSingle();
+  if (error) throw error;
+  return data ?? { id: "global", course_structure_url: null };
+}
+
+export async function updateSiteSettings(input: Partial<Pick<SiteSettings, "course_structure_url">>) {
+  const { error } = await supabase.from("site_settings").update(input).eq("id", "global");
+  if (error) throw error;
+}
+
 export type ResourceKind = "notes" | "syllabus" | "video" | "question_paper";
 
 export type Resource = {
