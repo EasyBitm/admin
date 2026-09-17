@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Eye, EyeOff, Plus, Save, Trash2, Upload } from "lucide-react";
 import {
   createSubject,
@@ -43,6 +44,8 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     queueMicrotask(() => void load());
+    // load is intentionally recreated after mutations; this effect only runs on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function run(action: () => Promise<unknown>) {
@@ -120,7 +123,7 @@ export default function AdminDashboard() {
               </div>
             </form>
             <form onSubmit={addSubject} className="mb-6 grid gap-2 rounded-xl border border-border bg-surface p-4 sm:grid-cols-5"><input required value={newSubject.name} onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })} placeholder="Subject name" className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" /><input required value={newSubject.code} onChange={(e) => setNewSubject({ ...newSubject, code: e.target.value })} placeholder="Code" className="rounded-lg border border-border bg-background px-3 py-2 text-sm" /><input type="number" min={1} value={newSubject.chapters} onChange={(e) => setNewSubject({ ...newSubject, chapters: Number(e.target.value) })} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" /><button className="rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:opacity-90"><Plus size={15} className="mr-1 inline" />Add subject</button></form>
-            <div className="space-y-2">{selected.subjects.map((subject) => <div key={subject.id} className="grid gap-2 rounded-xl border border-border bg-surface p-3 sm:grid-cols-[1fr_7rem_6rem_6rem_auto]"><input defaultValue={subject.name} onBlur={(e) => e.target.value !== subject.name && void run(() => updateSubject(subject.id, { name: e.target.value }))} className="rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-medium focus:border-border" /><input defaultValue={subject.code} onBlur={(e) => e.target.value !== subject.code && void run(() => updateSubject(subject.id, { code: e.target.value }))} className="rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-muted focus:border-border" /><input type="number" min={1} defaultValue={subject.chapters} onBlur={(e) => Number(e.target.value) !== subject.chapters && void run(() => updateSubject(subject.id, { chapters: Number(e.target.value) }))} className="rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-muted focus:border-border" /><select defaultValue={subject.difficulty} onChange={(e) => void run(() => updateSubject(subject.id, { difficulty: e.target.value as Difficulty }))} className="rounded-lg border border-border bg-background px-2 py-1 text-sm">{difficulties.map((difficulty) => <option key={difficulty}>{difficulty}</option>)}</select><button onClick={() => window.confirm(`Delete ${subject.name}?`) && void run(() => deleteSubject(subject.id))} aria-label={`Delete ${subject.name}`} className="rounded-lg px-2 text-muted hover:bg-red-500/10 hover:text-red-400"><Trash2 size={16} /></button></div>)}</div>
+            <div className="space-y-2">{selected.subjects.map((subject) => <div key={subject.id} className="grid gap-2 rounded-xl border border-border bg-surface p-3 sm:grid-cols-[1fr_7rem_6rem_6rem_auto_auto]"><input defaultValue={subject.name} onBlur={(e) => e.target.value !== subject.name && void run(() => updateSubject(subject.id, { name: e.target.value }))} className="rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-medium focus:border-border" /><input defaultValue={subject.code} onBlur={(e) => e.target.value !== subject.code && void run(() => updateSubject(subject.id, { code: e.target.value }))} className="rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-muted focus:border-border" /><input type="number" min={1} defaultValue={subject.chapters} onBlur={(e) => Number(e.target.value) !== subject.chapters && void run(() => updateSubject(subject.id, { chapters: Number(e.target.value) }))} className="rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-muted focus:border-border" /><select defaultValue={subject.difficulty} onChange={(e) => void run(() => updateSubject(subject.id, { difficulty: e.target.value as Difficulty }))} className="rounded-lg border border-border bg-background px-2 py-1 text-sm">{difficulties.map((difficulty) => <option key={difficulty}>{difficulty}</option>)}</select><Link href={`/${selected.slug}/${subject.id}`} className="rounded-lg border border-border px-2 py-1 text-center text-sm hover:bg-background">Resources</Link><button onClick={() => window.confirm(`Delete ${subject.name}?`) && void run(() => deleteSubject(subject.id))} aria-label={`Delete ${subject.name}`} className="rounded-lg px-2 text-muted hover:bg-red-500/10 hover:text-red-400"><Trash2 size={16} /></button></div>)}</div>
           </section> : <p className="text-sm text-muted">No semesters found.</p>}
         </div>
       )}
