@@ -35,7 +35,7 @@ export async function updateSiteSettings(input: Partial<Pick<SiteSettings, "cour
   if (error) throw error;
 }
 
-export type ResourceKind = "notes" | "syllabus" | "video" | "question_paper";
+export type ResourceKind = "notes" | "handwritten_notes" | "syllabus" | "video" | "question_paper";
 
 export type Resource = {
   id: string;

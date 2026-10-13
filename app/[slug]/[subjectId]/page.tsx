@@ -17,14 +17,28 @@ import {
 } from "../../../src/lib/data";
 import { uploadResourceFile } from "../../../src/lib/storage";
 
-const kinds: ResourceKind[] = ["notes", "syllabus", "video", "question_paper"];
+const kinds: ResourceKind[] = ["notes", "handwritten_notes", "syllabus", "video", "question_paper"];
 
 const kindLabels: Record<ResourceKind, string> = {
   notes: "Notes (PDF)",
+  handwritten_notes: "Handwritten Notes (PDF)",
   syllabus: "Syllabus (PDF)",
   video: "Video (URL)",
   question_paper: "Question Paper (PNG)",
 };
+
+// Kinds that are tagged with a lesson number.
+function usesLesson(kind: ResourceKind) {
+  return kind === "notes" || kind === "video";
+}
+
+// A subject has a single handwritten notes PDF.
+function hasHandwrittenNotes(subject: SubjectWithResources) {
+  return subject.resources.some((r) => r.kind === "handwritten_notes");
+}
+
+const handwrittenNotesTakenMessage =
+  "This subject already has handwritten notes. Delete or change the existing one first.";
 
 export default function AdminSubjectPage({
   params,
@@ -108,7 +122,11 @@ export default function AdminSubjectPage({
     e.preventDefault();
     if (!subject || !title.trim() || !url.trim()) return;
     if (kind === "question_paper" && !year.trim()) return;
-    if ((kind === "notes" || kind === "video") && !lesson.trim()) return;
+    if (usesLesson(kind) && !lesson.trim()) return;
+    if (kind === "handwritten_notes" && hasHandwrittenNotes(subject)) {
+      setError(handwrittenNotesTakenMessage);
+      return;
+    }
     setSaving(true);
     await action(() =>
       createResource({
@@ -117,7 +135,7 @@ export default function AdminSubjectPage({
         title: title.trim(),
         url: url.trim(),
         year: kind === "question_paper" ? Number(year) : null,
-        lesson: kind === "notes" || kind === "video" ? Number(lesson) : null,
+        lesson: usesLesson(kind) ? Number(lesson) : null,
         sort_order: subject.resources.length + 1,
       }),
     );
@@ -382,7 +400,7 @@ export default function AdminSubjectPage({
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
           />
         )}
-        {(kind === "notes" || kind === "video") && (
+        {usesLesson(kind) && (
           <input
             type="number"
             min={1}
@@ -404,7 +422,7 @@ export default function AdminSubjectPage({
           }
           disabled={uploading}
           className={`rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-50 ${
-            kind === "question_paper" || kind === "notes" || kind === "video"
+            kind === "question_paper" || usesLesson(kind)
               ? "sm:col-span-1"
               : "sm:col-span-2"
           }`}
@@ -446,10 +464,20 @@ export default function AdminSubjectPage({
           >
             <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
               <select
-                defaultValue={resource.kind}
-                onChange={(e) =>
-                  action(() => updateResource(resource.id, { kind: e.target.value as ResourceKind }))
-                }
+                value={resource.kind}
+                onChange={(e) => {
+                  const nextKind = e.target.value as ResourceKind;
+                  if (nextKind === "handwritten_notes" && hasHandwrittenNotes(subject)) {
+                    setError(handwrittenNotesTakenMessage);
+                    return;
+                  }
+                  action(() =>
+                    updateResource(resource.id, {
+                      kind: nextKind,
+                      lesson: usesLesson(nextKind) ? resource.lesson : null,
+                    }),
+                  );
+                }}
                 className="rounded-lg border border-border bg-background px-2 py-1 text-xs sm:w-40"
               >
                 {kinds.map((k) => (
@@ -479,7 +507,7 @@ export default function AdminSubjectPage({
                   className="rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-16"
                 />
               )}
-              {(resource.kind === "notes" || resource.kind === "video") && (
+              {usesLesson(resource.kind) && (
                 <input
                   type="number"
                   min={1}
