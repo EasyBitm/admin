@@ -12,6 +12,7 @@ import {
   updateLesson,
   updateSubject,
   updateResource,
+  type Resource,
   type ResourceKind,
   type SubjectWithResources,
 } from "../../../src/lib/data";
@@ -195,7 +196,7 @@ export default function AdminSubjectPage({
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-6 py-16 text-sm text-muted">
+      <div className="mx-auto w-full max-w-7xl px-6 py-12 text-sm text-muted">
         Loading…
       </div>
     );
@@ -203,7 +204,7 @@ export default function AdminSubjectPage({
 
   if (!subject) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-6 py-16">
+      <div className="mx-auto w-full max-w-7xl px-6 py-12">
         <p className="text-sm text-muted">Subject not found.</p>
         <div className="mt-4">
           <Breadcrumbs
@@ -214,255 +215,24 @@ export default function AdminSubjectPage({
     );
   }
 
-  return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-16">
-      <Breadcrumbs
-        items={[
-          { label: "Admin", href: "/" },
-          { label: slug, href: `/${slug}` },
-          { label: subject.name },
-        ]}
-      />
+  const inputClass =
+    "rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-50";
+  const primaryButtonClass =
+    "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50";
 
-      {error && (
-        <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
-          {error}
-        </div>
-      )}
+  const questionPapers = subject.resources.filter((r) => r.kind === "question_paper");
+  const otherResources = subject.resources.filter((r) => r.kind !== "question_paper");
+  // Newest year first; papers without a year go last.
+  const questionPaperYears = Array.from(new Set(questionPapers.map((r) => r.year ?? 0))).sort(
+    (a, b) => b - a,
+  );
 
-      <h1 className="mt-6 text-3xl font-bold tracking-tight">{subject.name}</h1>
-      <p className="mt-1 text-sm text-muted">
-        {subject.code} · Manage notes, syllabus, videos, and question papers.
-      </p>
-
-      <form
-        onSubmit={handleSaveOneshotVideo}
-        className="mt-8 rounded-xl border border-border bg-surface p-4"
-      >
-        <h2 className="font-semibold">One-shot video</h2>
-        <p className="mt-1 text-sm text-muted">
-          Add one YouTube or video URL for this subject.
-        </p>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <input
-            value={oneshotVideoUrl}
-            onChange={(e) => setOneshotVideoUrl(e.target.value)}
-            placeholder="YouTube video URL"
-            className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
-          >
-            Save video
-          </button>
-        </div>
-      </form>
-
-      <form
-        onSubmit={handleSaveOverallNotes}
-        className="mt-4 rounded-xl border border-border bg-surface p-4"
-      >
-        <h2 className="font-semibold">Overall notes</h2>
-        <p className="mt-1 text-sm text-muted">
-          Add the complete notes PDF for this subject.
-        </p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
-          <input
-            value={overallNotesUrl}
-            onChange={(e) => setOverallNotesUrl(e.target.value)}
-            placeholder="PDF URL (or upload a file)"
-            disabled={uploadingNotes}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-50"
-          />
-          <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background">
-            <Upload size={14} />
-            {uploadingNotes ? "Uploading…" : "Upload PDF"}
-            <input
-              type="file"
-              accept="application/pdf"
-              disabled={uploadingNotes}
-              onChange={(e) => handleOverallNotesUpload(e.target.files?.[0])}
-              className="hidden"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={saving || uploadingNotes}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
-          >
-            Save notes
-          </button>
-        </div>
-      </form>
-
-      <h2 className="mt-10 text-lg font-semibold">Course Outline (Lessons)</h2>
-      <form
-        onSubmit={handleAddLesson}
-        className="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-border bg-surface p-4 sm:grid-cols-6"
-      >
-        <input
-          value={lessonTitle}
-          onChange={(e) => setLessonTitle(e.target.value)}
-          placeholder="Unit title (e.g. Unit 1: Computer Fundamentals)"
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent sm:col-span-4"
-        />
-        <input
-          type="number"
-          value={lessonHours}
-          onChange={(e) => setLessonHours(e.target.value)}
-          placeholder="Hours (LHs)"
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent sm:col-span-1"
-        />
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover-primary disabled:opacity-50 sm:col-span-1"
-        >
-          Add Unit
-        </button>
-      </form>
-
-      <div className="mt-3 flex flex-col gap-2">
-        {subject.lessons.length === 0 && (
-          <div className="text-sm text-muted">No units added yet.</div>
-        )}
-        {subject.lessons.map((item, i) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3"
-          >
-            <span className="text-sm text-muted">{i + 1}.</span>
-            <input
-              defaultValue={item.title}
-              onBlur={(e) => {
-                if (e.target.value !== item.title)
-                  action(() => updateLesson(item.id, { title: e.target.value }));
-              }}
-              className="flex-1 rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm font-medium outline-none focus:border-border focus:bg-background"
-            />
-            <input
-              type="number"
-              defaultValue={item.hours ?? ""}
-              onBlur={(e) => {
-                const val = e.target.value ? Number(e.target.value) : null;
-                if (val !== item.hours) action(() => updateLesson(item.id, { hours: val }));
-              }}
-              placeholder="LHs"
-              className="w-16 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background"
-            />
-            <button
-              onClick={() => handleDeleteLesson(item.id)}
-              aria-label="Delete unit"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <h2 className="mt-10 text-lg font-semibold">Resources</h2>
-      <form
-        onSubmit={handleAdd}
-        className="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-border bg-surface p-4 sm:grid-cols-6"
-      >
-        <select
-          value={kind}
-          onChange={(e) => setKind(e.target.value as ResourceKind)}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent sm:col-span-2"
-        >
-          {kinds.map((k) => (
-            <option key={k} value={k}>
-              {kindLabels[k]}
-            </option>
-          ))}
-        </select>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={
-            kind === "question_paper"
-              ? "Title (e.g. Board Exam 2023)"
-              : kind === "notes"
-                ? "Title (e.g. Lesson 1 Notes)"
-                : "Title"
-          }
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent sm:col-span-2"
-        />
-        {kind === "question_paper" && (
-          <input
-            type="number"
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            placeholder="Year"
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        )}
-        {usesLesson(kind) && (
-          <input
-            type="number"
-            min={1}
-            value={lesson}
-            onChange={(e) => setLesson(e.target.value)}
-            placeholder="Lesson #"
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        )}
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder={
-            kind === "video"
-              ? "YouTube video URL"
-              : uploading
-                ? "Uploading…"
-                : "URL (or upload a file →)"
-          }
-          disabled={uploading}
-          className={`rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-50 ${
-            kind === "question_paper" || usesLesson(kind)
-              ? "sm:col-span-1"
-              : "sm:col-span-2"
-          }`}
-        />
-        {kind !== "video" && (
-          <label
-            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background ${
-              uploading ? "opacity-50" : ""
-            }`}
-          >
-            <Upload size={14} />
-            {uploading ? "Uploading…" : "Upload file"}
-            <input
-              type="file"
-              accept="application/pdf"
-              disabled={uploading}
-              onChange={(e) => handleFile(e.target.files?.[0])}
-              className="hidden"
-            />
-          </label>
-        )}
-        <button
-          type="submit"
-          disabled={saving || uploading}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover-primary disabled:opacity-50 sm:col-span-6"
-        >
-          Add Resource
-        </button>
-      </form>
-
-      <div className="mt-8 flex flex-col gap-2">
-        {subject.resources.length === 0 && (
-          <div className="text-sm text-muted">No resources yet.</div>
-        )}
-        {subject.resources.map((resource) => (
+  const renderResource = (resource: Resource) => (
           <div
             key={resource.id}
-            className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-2 rounded-lg border border-border bg-background/40 p-3 sm:flex-row sm:items-center"
           >
-            <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
               <select
                 value={resource.kind}
                 onChange={(e) => {
@@ -478,7 +248,7 @@ export default function AdminSubjectPage({
                     }),
                   );
                 }}
-                className="rounded-lg border border-border bg-background px-2 py-1 text-xs sm:w-40"
+                className="shrink-0 rounded-lg border border-border bg-background px-2 py-1 text-xs sm:w-40"
               >
                 {kinds.map((k) => (
                   <option key={k} value={k}>
@@ -492,7 +262,7 @@ export default function AdminSubjectPage({
                   if (e.target.value !== resource.title)
                     action(() => updateResource(resource.id, { title: e.target.value }));
                 }}
-                className="rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm font-medium outline-none focus:border-border focus:bg-background sm:w-48"
+                className="min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm font-medium outline-none focus:border-border focus:bg-background sm:w-44"
               />
               {resource.kind === "question_paper" && (
                 <input
@@ -504,7 +274,7 @@ export default function AdminSubjectPage({
                       action(() => updateResource(resource.id, { year: val }));
                   }}
                   placeholder="Year"
-                  className="rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-16"
+                  className="shrink-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-16"
                 />
               )}
               {usesLesson(resource.kind) && (
@@ -518,7 +288,7 @@ export default function AdminSubjectPage({
                       action(() => updateResource(resource.id, { lesson: val }));
                   }}
                   placeholder="Lesson #"
-                  className="rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-20"
+                  className="shrink-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-20"
                 />
               )}
               <input
@@ -527,18 +297,290 @@ export default function AdminSubjectPage({
                   if (e.target.value !== resource.url)
                     action(() => updateResource(resource.id, { url: e.target.value }));
                 }}
-                className="flex-1 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background"
+                className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background"
               />
             </div>
             <button
               onClick={() => handleDelete(resource.id)}
               aria-label="Delete resource"
-              className="flex h-8 w-8 items-center justify-center self-end rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500 sm:self-center"
+              className="flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500 sm:self-center"
             >
               <Trash2 size={16} />
             </button>
           </div>
-        ))}
+  );
+
+  return (
+    <div className="mx-auto w-full max-w-7xl px-6 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Admin", href: "/" },
+          { label: slug, href: `/${slug}` },
+          { label: subject.name },
+        ]}
+      />
+
+      <h1 className="mt-6 text-3xl font-bold tracking-tight">{subject.name}</h1>
+      <p className="mt-1 text-sm text-muted">
+        {subject.code} · Manage notes, syllabus, videos, and question papers.
+      </p>
+
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        {/* Left: course outline */}
+        <aside className="rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:flex lg:max-h-[calc(100vh-3rem)] lg:flex-col">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-lg font-semibold">Course Outline</h2>
+            <span className="text-xs text-muted">
+              {subject.lessons.length} {subject.lessons.length === 1 ? "unit" : "units"}
+            </span>
+          </div>
+
+          <form onSubmit={handleAddLesson} className="mt-3 flex flex-col gap-2">
+            <input
+              value={lessonTitle}
+              onChange={(e) => setLessonTitle(e.target.value)}
+              placeholder="Unit title (e.g. Unit 1: Computer Fundamentals)"
+              className={inputClass}
+            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={lessonHours}
+                onChange={(e) => setLessonHours(e.target.value)}
+                placeholder="Hours (LHs)"
+                className={`${inputClass} min-w-0 flex-1`}
+              />
+              <button type="submit" disabled={saving} className={primaryButtonClass}>
+                Add Unit
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-4 flex flex-col gap-1.5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            {subject.lessons.length === 0 && (
+              <div className="py-2 text-sm text-muted">No units added yet.</div>
+            )}
+            {subject.lessons.map((item, i) => {
+              const linked = subject.resources.filter(
+                (r) => usesLesson(r.kind) && r.lesson === i + 1,
+              ).length;
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-2 rounded-lg border border-border bg-background/40 p-2"
+                >
+                  <span className="w-6 shrink-0 text-center text-sm text-muted">{i + 1}.</span>
+                  <div className="min-w-0 flex-1">
+                    <input
+                      defaultValue={item.title}
+                      onBlur={(e) => {
+                        if (e.target.value !== item.title)
+                          action(() => updateLesson(item.id, { title: e.target.value }));
+                      }}
+                      className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-sm font-medium outline-none focus:border-border focus:bg-background"
+                    />
+                    <div className="px-1 text-xs text-muted">
+                      {linked} {linked === 1 ? "resource" : "resources"}
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    defaultValue={item.hours ?? ""}
+                    onBlur={(e) => {
+                      const val = e.target.value ? Number(e.target.value) : null;
+                      if (val !== item.hours) action(() => updateLesson(item.id, { hours: val }));
+                    }}
+                    placeholder="LHs"
+                    aria-label="Lecture hours"
+                    className="w-14 shrink-0 rounded-md border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background"
+                  />
+                  <button
+                    onClick={() => handleDeleteLesson(item.id)}
+                    aria-label="Delete unit"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* Right: uploads */}
+        <div className="flex min-w-0 flex-col gap-4">
+          <form
+            onSubmit={handleSaveOneshotVideo}
+            className="rounded-xl border border-border bg-surface p-4"
+          >
+            <h2 className="font-semibold">One-shot video</h2>
+            <p className="mt-1 text-sm text-muted">Add one YouTube or video URL for this subject.</p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <input
+                value={oneshotVideoUrl}
+                onChange={(e) => setOneshotVideoUrl(e.target.value)}
+                placeholder="YouTube video URL"
+                className={`${inputClass} min-w-0 flex-1`}
+              />
+              <button type="submit" disabled={saving} className={primaryButtonClass}>
+                Save video
+              </button>
+            </div>
+          </form>
+
+          <form
+            onSubmit={handleSaveOverallNotes}
+            className="rounded-xl border border-border bg-surface p-4"
+          >
+            <h2 className="font-semibold">Overall notes</h2>
+            <p className="mt-1 text-sm text-muted">Add the complete notes PDF for this subject.</p>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
+              <input
+                value={overallNotesUrl}
+                onChange={(e) => setOverallNotesUrl(e.target.value)}
+                placeholder="PDF URL (or upload a file)"
+                disabled={uploadingNotes}
+                className={`${inputClass} min-w-0`}
+              />
+              <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background">
+                <Upload size={14} />
+                {uploadingNotes ? "Uploading…" : "Upload PDF"}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  disabled={uploadingNotes}
+                  onChange={(e) => handleOverallNotesUpload(e.target.files?.[0])}
+                  className="hidden"
+                />
+              </label>
+              <button type="submit" disabled={saving || uploadingNotes} className={primaryButtonClass}>
+                Save notes
+              </button>
+            </div>
+          </form>
+
+          <section className="rounded-xl border border-border bg-surface p-4">
+            <h2 className="font-semibold">Resources</h2>
+            <p className="mt-1 text-sm text-muted">
+              Notes and videos are tagged with a lesson from the outline.
+            </p>
+            <form onSubmit={handleAdd} className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-6">
+              <select
+                value={kind}
+                onChange={(e) => setKind(e.target.value as ResourceKind)}
+                className={`${inputClass} sm:col-span-2`}
+              >
+                {kinds.map((k) => (
+                  <option key={k} value={k}>
+                    {kindLabels[k]}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={
+                  kind === "question_paper"
+                    ? "Title (e.g. Board Exam 2023)"
+                    : kind === "notes"
+                      ? "Title (e.g. Lesson 1 Notes)"
+                      : "Title"
+                }
+                className={`${inputClass} ${
+                  kind === "question_paper" || usesLesson(kind) ? "sm:col-span-3" : "sm:col-span-4"
+                }`}
+              />
+              {kind === "question_paper" && (
+                <input
+                  type="number"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  placeholder="Year"
+                  className={inputClass}
+                />
+              )}
+              {usesLesson(kind) && (
+                <input
+                  type="number"
+                  min={1}
+                  value={lesson}
+                  onChange={(e) => setLesson(e.target.value)}
+                  placeholder="Lesson #"
+                  className={inputClass}
+                />
+              )}
+              <input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder={
+                  kind === "video"
+                    ? "YouTube video URL"
+                    : uploading
+                      ? "Uploading…"
+                      : "URL (or upload a file →)"
+                }
+                disabled={uploading}
+                className={`${inputClass} min-w-0 ${kind === "video" ? "sm:col-span-6" : "sm:col-span-4"}`}
+              />
+              {kind !== "video" && (
+                <label
+                  className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background sm:col-span-2 ${
+                    uploading ? "opacity-50" : ""
+                  }`}
+                >
+                  <Upload size={14} />
+                  {uploading ? "Uploading…" : "Upload file"}
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    disabled={uploading}
+                    onChange={(e) => handleFile(e.target.files?.[0])}
+                    className="hidden"
+                  />
+                </label>
+              )}
+              <button
+                type="submit"
+                disabled={saving || uploading}
+                className={`${primaryButtonClass} sm:col-span-6`}
+              >
+                Add Resource
+              </button>
+            </form>
+
+            <div className="mt-5 flex flex-col gap-2">
+              {subject.resources.length === 0 && (
+                <div className="text-sm text-muted">No resources yet.</div>
+              )}
+              {otherResources.map(renderResource)}
+              {questionPapers.length > 0 && (
+                <div className={otherResources.length > 0 ? "mt-4" : ""}>
+                  <h3 className="text-sm font-semibold">Question Papers</h3>
+                  <div className="mt-2 flex flex-col gap-4">
+                    {questionPaperYears.map((year) => {
+                      const papers = questionPapers.filter((r) => (r.year ?? 0) === year);
+                      return (
+                        <div key={year}>
+                          <div className="text-xs font-medium text-muted">
+                            {year || "Year unspecified"} · {papers.length}{" "}
+                            {papers.length === 1 ? "paper" : "papers"}
+                          </div>
+                          <div className="mt-2 flex flex-col gap-2">{papers.map(renderResource)}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
