@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { SyllabusContent, SyllabusUnit } from "./syllabus";
 
 export type Difficulty = "Easy" | "Medium" | "Hard";
 export type Subject = {
@@ -10,7 +11,7 @@ export type Subject = {
   difficulty: Difficulty;
   sort_order: number;
   oneshot_video_url?: string | null;
-  overall_notes_url?: string | null;
+  syllabus_content?: SyllabusContent | null;
 };
 export type Semester = {
   id: string;
@@ -163,5 +164,21 @@ export async function updateLesson(id: string, input: Partial<Omit<Lesson, "id" 
 
 export async function deleteLesson(id: string) {
   const { error } = await supabase.from("lessons").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// Replaces a subject's course outline with the units of an extracted syllabus.
+export async function replaceLessonsWithUnits(subjectId: string, units: SyllabusUnit[]) {
+  const { error: deleteError } = await supabase.from("lessons").delete().eq("subject_id", subjectId);
+  if (deleteError) throw deleteError;
+  if (units.length === 0) return;
+  const { error } = await supabase.from("lessons").insert(
+    units.map((unit, i) => ({
+      subject_id: subjectId,
+      title: unit.title,
+      hours: unit.hours,
+      sort_order: i + 1,
+    })),
+  );
   if (error) throw error;
 }

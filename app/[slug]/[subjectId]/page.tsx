@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { Trash2, Upload } from "lucide-react";
 import Breadcrumbs from "../../../src/components/Breadcrumbs";
+import SyllabusEditor from "../../../src/components/SyllabusEditor";
 import {
   createLesson,
   createResource,
@@ -60,17 +61,17 @@ export default function AdminSubjectPage({
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonHours, setLessonHours] = useState("");
   const [oneshotVideoUrl, setOneshotVideoUrl] = useState("");
-  const [overallNotesUrl, setOverallNotesUrl] = useState("");
-  const [uploadingNotes, setUploadingNotes] = useState(false);
+  // Set after a syllabus PDF is added so the syllabus editor extracts it automatically.
+  const [autoExtractUrl, setAutoExtractUrl] = useState<string | null>(null);
 
+  // Only the first load shows the loading screen; reloads after edits keep the page
+  // mounted so in-progress state (like an unsaved syllabus draft) survives.
   async function load() {
-    setLoading(true);
     setError("");
     try {
       const data = await getSubject(subjectId);
       setSubject(data);
       setOneshotVideoUrl(data?.oneshot_video_url ?? "");
-      setOverallNotesUrl(data?.overall_notes_url ?? "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load subject.");
     } finally {
@@ -88,8 +89,10 @@ export default function AdminSubjectPage({
     try {
       await work();
       await load();
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Action failed.");
+      return false;
     }
   }
 
@@ -106,19 +109,6 @@ export default function AdminSubjectPage({
     }
   }
 
-  async function handleOverallNotesUpload(file: File | undefined) {
-    if (!file) return;
-    setUploadingNotes(true);
-    setError("");
-    try {
-      setOverallNotesUrl(await uploadResourceFile(file));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
-    } finally {
-      setUploadingNotes(false);
-    }
-  }
-
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!subject || !title.trim() || !url.trim()) return;
@@ -129,7 +119,7 @@ export default function AdminSubjectPage({
       return;
     }
     setSaving(true);
-    await action(() =>
+    const added = await action(() =>
       createResource({
         subject_id: subject.id,
         kind,
@@ -140,6 +130,7 @@ export default function AdminSubjectPage({
         sort_order: subject.resources.length + 1,
       }),
     );
+    if (added && kind === "syllabus") setAutoExtractUrl(url.trim());
     setTitle("");
     setUrl("");
     setYear("");
@@ -180,16 +171,6 @@ export default function AdminSubjectPage({
     setSaving(true);
     await action(() =>
       updateSubject(subject.id, { oneshot_video_url: oneshotVideoUrl.trim() || null }),
-    );
-    setSaving(false);
-  }
-
-  async function handleSaveOverallNotes(e: React.FormEvent) {
-    e.preventDefault();
-    if (!subject) return;
-    setSaving(true);
-    await action(() =>
-      updateSubject(subject.id, { overall_notes_url: overallNotesUrl.trim() || null }),
     );
     setSaving(false);
   }
@@ -434,36 +415,13 @@ export default function AdminSubjectPage({
             </div>
           </form>
 
-          <form
-            onSubmit={handleSaveOverallNotes}
-            className="rounded-xl border border-border bg-surface p-4"
-          >
-            <h2 className="font-semibold">Overall notes</h2>
-            <p className="mt-1 text-sm text-muted">Add the complete notes PDF for this subject.</p>
-            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
-              <input
-                value={overallNotesUrl}
-                onChange={(e) => setOverallNotesUrl(e.target.value)}
-                placeholder="PDF URL (or upload a file)"
-                disabled={uploadingNotes}
-                className={`${inputClass} min-w-0`}
-              />
-              <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background">
-                <Upload size={14} />
-                {uploadingNotes ? "Uploading…" : "Upload PDF"}
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  disabled={uploadingNotes}
-                  onChange={(e) => handleOverallNotesUpload(e.target.files?.[0])}
-                  className="hidden"
-                />
-              </label>
-              <button type="submit" disabled={saving || uploadingNotes} className={primaryButtonClass}>
-                Save notes
-              </button>
-            </div>
-          </form>
+          <SyllabusEditor
+            subject={subject}
+            syllabusUrl={subject.resources.find((r) => r.kind === "syllabus")?.url ?? null}
+            autoExtractUrl={autoExtractUrl}
+            onChanged={load}
+            onError={setError}
+          />
 
           <section className="rounded-xl border border-border bg-surface p-4">
             <h2 className="font-semibold">Resources</h2>
