@@ -24,7 +24,7 @@ const kindLabels: Record<ResourceKind, string> = {
   handwritten_notes: "Handwritten Notes (PDF)",
   syllabus: "Syllabus (PDF)",
   video: "Video (URL)",
-  question_paper: "Question Paper (PNG)",
+  question_paper: "Question Paper (PDF)",
 };
 
 // Kinds that are tagged with a lesson number.
@@ -384,7 +384,7 @@ export default function AdminSubjectPage({
           onChange={(e) => setTitle(e.target.value)}
           placeholder={
             kind === "question_paper"
-              ? "Title (e.g. Page 1)"
+              ? "Title (e.g. Board Exam 2023)"
               : kind === "notes"
                 ? "Title (e.g. Lesson 1 Notes)"
                 : "Title"
@@ -437,7 +437,7 @@ export default function AdminSubjectPage({
             {uploading ? "Uploading…" : "Upload file"}
             <input
               type="file"
-              accept={kind === "question_paper" ? "image/png" : "application/pdf"}
+              accept="application/pdf"
               disabled={uploading}
               onChange={(e) => handleFile(e.target.files?.[0])}
               className="hidden"
