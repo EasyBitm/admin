@@ -228,86 +228,86 @@ export default function AdminSubjectPage({
   );
 
   const renderResource = (resource: Resource) => (
-          <div
-            key={resource.id}
-            className="flex flex-col gap-2 rounded-lg border border-border bg-background/40 p-3 sm:flex-row sm:items-center"
-          >
-            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-              <select
-                value={resource.kind}
-                onChange={(e) => {
-                  const nextKind = e.target.value as ResourceKind;
-                  if (nextKind === "handwritten_notes" && hasHandwrittenNotes(subject)) {
-                    setError(handwrittenNotesTakenMessage);
-                    return;
-                  }
-                  action(() =>
-                    updateResource(resource.id, {
-                      kind: nextKind,
-                      lesson: usesLesson(nextKind) ? resource.lesson : null,
-                    }),
-                  );
-                }}
-                className="shrink-0 rounded-lg border border-border bg-background px-2 py-1 text-xs sm:w-40"
-              >
-                {kinds.map((k) => (
-                  <option key={k} value={k}>
-                    {kindLabels[k]}
-                  </option>
-                ))}
-              </select>
-              <input
-                defaultValue={resource.title}
-                onBlur={(e) => {
-                  if (e.target.value !== resource.title)
-                    action(() => updateResource(resource.id, { title: e.target.value }));
-                }}
-                className="min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm font-medium outline-none focus:border-border focus:bg-background sm:w-44"
-              />
-              {resource.kind === "question_paper" && (
-                <input
-                  type="number"
-                  defaultValue={resource.year ?? ""}
-                  onBlur={(e) => {
-                    const val = e.target.value ? Number(e.target.value) : null;
-                    if (val !== resource.year)
-                      action(() => updateResource(resource.id, { year: val }));
-                  }}
-                  placeholder="Year"
-                  className="shrink-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-16"
-                />
-              )}
-              {usesLesson(resource.kind) && (
-                <input
-                  type="number"
-                  min={1}
-                  defaultValue={resource.lesson ?? ""}
-                  onBlur={(e) => {
-                    const val = e.target.value ? Number(e.target.value) : null;
-                    if (val !== resource.lesson)
-                      action(() => updateResource(resource.id, { lesson: val }));
-                  }}
-                  placeholder="Lesson #"
-                  className="shrink-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-20"
-                />
-              )}
-              <input
-                defaultValue={resource.url}
-                onBlur={(e) => {
-                  if (e.target.value !== resource.url)
-                    action(() => updateResource(resource.id, { url: e.target.value }));
-                }}
-                className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background"
-              />
-            </div>
-            <button
-              onClick={() => handleDelete(resource.id)}
-              aria-label="Delete resource"
-              className="flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500 sm:self-center"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
+    <div
+      key={resource.id}
+      className="flex flex-col gap-2 rounded-lg border border-border bg-background/40 p-3 sm:flex-row sm:items-center"
+    >
+      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+        <select
+          value={resource.kind}
+          onChange={(e) => {
+            const nextKind = e.target.value as ResourceKind;
+            if (nextKind === "handwritten_notes" && hasHandwrittenNotes(subject)) {
+              setError(handwrittenNotesTakenMessage);
+              return;
+            }
+            action(() =>
+              updateResource(resource.id, {
+                kind: nextKind,
+                lesson: usesLesson(nextKind) ? resource.lesson : null,
+              }),
+            );
+          }}
+          className="shrink-0 rounded-lg border border-border bg-background px-2 py-1 text-xs sm:w-40"
+        >
+          {kinds.map((k) => (
+            <option key={k} value={k}>
+              {kindLabels[k]}
+            </option>
+          ))}
+        </select>
+        <input
+          defaultValue={resource.title}
+          onBlur={(e) => {
+            if (e.target.value !== resource.title)
+              action(() => updateResource(resource.id, { title: e.target.value }));
+          }}
+          className="min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm font-medium outline-none focus:border-border focus:bg-background sm:w-44"
+        />
+        {resource.kind === "question_paper" && (
+          <input
+            type="number"
+            defaultValue={resource.year ?? ""}
+            onBlur={(e) => {
+              const val = e.target.value ? Number(e.target.value) : null;
+              if (val !== resource.year)
+                action(() => updateResource(resource.id, { year: val }));
+            }}
+            placeholder="Year"
+            className="shrink-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-16"
+          />
+        )}
+        {usesLesson(resource.kind) && (
+          <input
+            type="number"
+            min={1}
+            defaultValue={resource.lesson ?? ""}
+            onBlur={(e) => {
+              const val = e.target.value ? Number(e.target.value) : null;
+              if (val !== resource.lesson)
+                action(() => updateResource(resource.id, { lesson: val }));
+            }}
+            placeholder="Lesson #"
+            className="shrink-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-20"
+          />
+        )}
+        <input
+          defaultValue={resource.url}
+          onBlur={(e) => {
+            if (e.target.value !== resource.url)
+              action(() => updateResource(resource.id, { url: e.target.value }));
+          }}
+          className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background"
+        />
+      </div>
+      <button
+        onClick={() => handleDelete(resource.id)}
+        aria-label="Delete resource"
+        className="flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500 sm:self-center"
+      >
+        <Trash2 size={16} />
+      </button>
+    </div>
   );
 
   return (
