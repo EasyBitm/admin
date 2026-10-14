@@ -70,7 +70,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-16">
+    <div className="mx-auto w-full max-w-7xl px-6 py-12">
       <h1 className="text-2xl font-bold tracking-tight">Admin</h1>
       <p className="mt-1 text-sm text-muted">
         Manage subjects and show/hide semesters on the site.
@@ -82,81 +82,87 @@ export default function AdminPage() {
         </div>
       )}
 
-      <form
-        onSubmit={handleSaveCourseStructure}
-        className="mt-8 rounded-xl border border-border bg-surface p-4"
-      >
-        <h2 className="font-semibold">BITM course structure</h2>
-        <p className="mt-1 text-sm text-muted">
-          Add the course structure PDF shown beside Semesters on the homepage.
-        </p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
-          <input
-            value={courseStructureUrl}
-            onChange={(e) => setCourseStructureUrl(e.target.value)}
-            placeholder="PDF URL (or upload a file)"
-            disabled={uploadingCourseStructure}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-50"
-          />
-          <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background">
-            <Upload size={14} />
-            {uploadingCourseStructure ? "Uploading…" : "Upload PDF"}
+      <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        {/* Left: site settings */}
+        <form
+          onSubmit={handleSaveCourseStructure}
+          className="rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6"
+        >
+          <h2 className="font-semibold">BITM course structure</h2>
+          <p className="mt-1 text-sm text-muted">
+            Add the course structure PDF shown beside Semesters on the homepage.
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
             <input
-              type="file"
-              accept="application/pdf"
+              value={courseStructureUrl}
+              onChange={(e) => setCourseStructureUrl(e.target.value)}
+              placeholder="PDF URL (or upload a file)"
               disabled={uploadingCourseStructure}
-              onChange={(e) => void handleCourseStructureUpload(e.target.files?.[0])}
-              className="hidden"
+              className="col-span-2 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-50"
             />
-          </label>
-          <button
-            type="submit"
-            disabled={savingCourseStructure || uploadingCourseStructure}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
-          >
-            Save structure
-          </button>
-        </div>
-      </form>
-
-      <h2 className="mt-10 text-sm font-semibold text-muted">Semesters</h2>
-      <div className="mt-3 flex flex-col gap-2">
-        {loading && <div className="text-sm text-muted">Loading…</div>}
-        {!loading && semesters.length === 0 && (
-          <div className="text-sm text-muted">No semesters found.</div>
-        )}
-        {semesters.map((s) => (
-          <div
-            key={s.id}
-            className={`flex items-center justify-between rounded-xl border border-border bg-surface px-5 py-4 ${
-              s.is_visible ? "" : "opacity-60"
-            }`}
-          >
-            <div>
-              <div className="font-medium">{s.name}</div>
-              <div className="text-sm text-muted">
-                /{s.slug} · {s.subjects.length} subjects ·{" "}
-                {s.is_visible ? "visible" : "hidden"}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/${s.slug}`}
-                className="rounded-full border border-border px-4 py-1.5 text-sm font-medium transition-colors hover-primary"
-              >
-                Manage
-              </Link>
-              <button
-                onClick={() => handleToggleVisible(s)}
-                aria-label={s.is_visible ? "Hide semester" : "Show semester"}
-                title={s.is_visible ? "Hide from site" : "Show on site"}
-                className="no-red-hover flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
-              >
-                {s.is_visible ? <Eye size={16} /> : <EyeOff size={16} />}
-              </button>
-            </div>
+            <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background">
+              <Upload size={14} />
+              {uploadingCourseStructure ? "Uploading…" : "Upload PDF"}
+              <input
+                type="file"
+                accept="application/pdf"
+                disabled={uploadingCourseStructure}
+                onChange={(e) => void handleCourseStructureUpload(e.target.files?.[0])}
+                className="hidden"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={savingCourseStructure || uploadingCourseStructure}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
+            >
+              Save structure
+            </button>
           </div>
-        ))}
+        </form>
+
+        {/* Right: semesters */}
+        <section className="min-w-0">
+          <h2 className="text-sm font-semibold text-muted">Semesters</h2>
+          <div className="mt-3 flex flex-col gap-2">
+            {loading && <div className="text-sm text-muted">Loading…</div>}
+            {!loading && semesters.length === 0 && (
+              <div className="text-sm text-muted">No semesters found.</div>
+            )}
+            {semesters.map((s) => (
+              <div
+                key={s.id}
+                className={`flex items-center justify-between rounded-xl border border-border bg-surface px-5 py-4 ${
+                  s.is_visible ? "" : "opacity-60"
+                }`}
+              >
+                <div>
+                  <div className="font-medium">{s.name}</div>
+                  <div className="text-sm text-muted">
+                    /{s.slug} · {s.subjects.length} subjects ·{" "}
+                    {s.is_visible ? "visible" : "hidden"}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href={`/${s.slug}`}
+                    className="rounded-full border border-border px-4 py-1.5 text-sm font-medium transition-colors hover-primary"
+                  >
+                    Manage
+                  </Link>
+                  <button
+                    onClick={() => handleToggleVisible(s)}
+                    aria-label={s.is_visible ? "Hide semester" : "Show semester"}
+                    title={s.is_visible ? "Hide from site" : "Show on site"}
+                    className="no-red-hover flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
+                  >
+                    {s.is_visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

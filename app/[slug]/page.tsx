@@ -126,7 +126,7 @@ export default function AdminSemesterPage({
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-6 py-16 text-sm text-muted">
+      <div className="mx-auto w-full max-w-7xl px-6 py-12 text-sm text-muted">
         Loading…
       </div>
     );
@@ -134,7 +134,7 @@ export default function AdminSemesterPage({
 
   if (!semester) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-6 py-16">
+      <div className="mx-auto w-full max-w-7xl px-6 py-12">
         <p className="text-sm text-muted">Semester not found.</p>
         <div className="mt-4">
           <Breadcrumbs items={[{ label: "Admin", href: "/" }]} />
@@ -143,15 +143,14 @@ export default function AdminSemesterPage({
     );
   }
 
-  return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-16">
-      <Breadcrumbs items={[{ label: "Admin", href: "/" }, { label: semester.name }]} />
+  const inputClass =
+    "rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-50";
+  const primaryButtonClass =
+    "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50";
 
-      {error && (
-        <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
-          {error}
-        </div>
-      )}
+  return (
+    <div className="mx-auto w-full max-w-7xl px-6 py-12">
+      <Breadcrumbs items={[{ label: "Admin", href: "/" }, { label: semester.name }]} />
 
       <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -170,132 +169,83 @@ export default function AdminSemesterPage({
         </button>
       </div>
 
-      <form
-        onSubmit={handleSaveOverallSyllabus}
-        className="mt-8 rounded-xl border border-border bg-surface p-4"
-      >
-        <h2 className="font-semibold">Overall syllabus</h2>
-        <p className="mt-1 text-sm text-muted">
-          Add the syllabus PDF for the whole semester.
-        </p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
-          <input
-            value={overallSyllabusUrl}
-            onChange={(e) => setOverallSyllabusUrl(e.target.value)}
-            placeholder="PDF URL (or upload a file)"
-            disabled={uploadingSyllabus}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-50"
-          />
-          <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background">
-            <Upload size={14} />
-            {uploadingSyllabus ? "Uploading…" : "Upload PDF"}
-            <input
-              type="file"
-              accept="application/pdf"
-              disabled={uploadingSyllabus}
-              onChange={(e) => handleOverallSyllabusUpload(e.target.files?.[0])}
-              className="hidden"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={saving || uploadingSyllabus}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
-          >
-            Save syllabus
-          </button>
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
+          {error}
         </div>
-      </form>
+      )}
 
-      <form
-        onSubmit={handleAddSubject}
-        className="mt-8 grid grid-cols-1 gap-2 rounded-xl border border-border bg-surface p-4 sm:grid-cols-5"
-      >
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Subject name"
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent sm:col-span-2"
-        />
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Code"
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-        />
-        <input
-          type="number"
-          min={1}
-          value={chapters}
-          onChange={(e) => setChapters(Number(e.target.value))}
-          placeholder="Chapters"
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-        />
-        <select
-          value={difficulty}
-          onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-        >
-          {difficulties.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover-primary disabled:opacity-50 sm:col-span-5"
-        >
-          Add Subject
-        </button>
-      </form>
-
-      <div className="mt-8 flex flex-col gap-2">
-        {semester.subjects.length === 0 && (
-          <div className="text-sm text-muted">No subjects yet.</div>
-        )}
-        {semester.subjects.map((subject) => (
-          <div
-            key={subject.id}
-            className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
+      <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        {/* Left: semester settings and new subject */}
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
+          <form
+            onSubmit={handleSaveOverallSyllabus}
+            className="rounded-xl border border-border bg-surface p-4"
           >
-            <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+            <h2 className="font-semibold">Overall syllabus</h2>
+            <p className="mt-1 text-sm text-muted">Add the syllabus PDF for the whole semester.</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <input
-                defaultValue={subject.name}
-                onBlur={(e) => {
-                  if (e.target.value !== subject.name)
-                    action(() => updateSubject(subject.id, { name: e.target.value }));
-                }}
-                className="rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm font-medium outline-none focus:border-border focus:bg-background sm:w-48"
+                value={overallSyllabusUrl}
+                onChange={(e) => setOverallSyllabusUrl(e.target.value)}
+                placeholder="PDF URL (or upload a file)"
+                disabled={uploadingSyllabus}
+                className={`${inputClass} col-span-2 min-w-0`}
+              />
+              <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-background">
+                <Upload size={14} />
+                {uploadingSyllabus ? "Uploading…" : "Upload PDF"}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  disabled={uploadingSyllabus}
+                  onChange={(e) => handleOverallSyllabusUpload(e.target.files?.[0])}
+                  className="hidden"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={saving || uploadingSyllabus}
+                className={primaryButtonClass}
+              >
+                Save syllabus
+              </button>
+            </div>
+          </form>
+
+          <form
+            onSubmit={handleAddSubject}
+            className="rounded-xl border border-border bg-surface p-4"
+          >
+            <h2 className="font-semibold">Add subject</h2>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Subject name"
+                className={`${inputClass} col-span-2 min-w-0`}
               />
               <input
-                defaultValue={subject.code}
-                onBlur={(e) => {
-                  if (e.target.value !== subject.code)
-                    action(() => updateSubject(subject.id, { code: e.target.value }));
-                }}
-                className="rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-24"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Code"
+                className={`${inputClass} min-w-0`}
               />
               <input
                 type="number"
                 min={1}
-                defaultValue={subject.chapters}
-                onBlur={(e) => {
-                  const val = Number(e.target.value);
-                  if (val !== subject.chapters)
-                    action(() => updateSubject(subject.id, { chapters: val }));
-                }}
-                className="rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-20"
+                value={chapters}
+                onChange={(e) => setChapters(Number(e.target.value))}
+                placeholder="Chapters"
+                aria-label="Chapters"
+                title="Chapters"
+                className={`${inputClass} min-w-0`}
               />
               <select
-                defaultValue={subject.difficulty}
-                onChange={(e) =>
-                  action(() =>
-                    updateSubject(subject.id, { difficulty: e.target.value as Difficulty }),
-                  )
-                }
-                className="rounded-lg border border-border bg-background px-2 py-1 text-xs sm:w-28"
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+                aria-label="Difficulty"
+                className={`${inputClass} col-span-2`}
               >
                 {difficulties.map((d) => (
                   <option key={d} value={d}>
@@ -303,24 +253,99 @@ export default function AdminSemesterPage({
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="flex items-center gap-2 self-end sm:self-center">
-              <Link
-                href={`/${slug}/${subject.id}`}
-                className="rounded-full border border-border px-4 py-1.5 text-sm font-medium transition-colors hover-primary"
-              >
-                Resources
-              </Link>
               <button
-                onClick={() => handleDeleteSubject(subject.id)}
-                aria-label="Delete subject"
-                className="no-red-hover flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
+                type="submit"
+                disabled={saving}
+                className={`${primaryButtonClass} col-span-2`}
               >
-                <Trash2 size={16} />
+                Add Subject
               </button>
             </div>
+          </form>
+        </aside>
+
+        {/* Right: subjects */}
+        <section className="min-w-0">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-sm font-semibold text-muted">Subjects</h2>
+            <span className="text-xs text-muted">Name · Code · Chapters · Difficulty</span>
           </div>
-        ))}
+          <div className="mt-3 flex flex-col gap-2">
+            {semester.subjects.length === 0 && (
+              <div className="text-sm text-muted">No subjects yet.</div>
+            )}
+            {semester.subjects.map((subject) => (
+              <div
+                key={subject.id}
+                className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    defaultValue={subject.name}
+                    onBlur={(e) => {
+                      if (e.target.value !== subject.name)
+                        action(() => updateSubject(subject.id, { name: e.target.value }));
+                    }}
+                    aria-label="Subject name"
+                    className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-1 py-1 text-sm font-medium outline-none focus:border-border focus:bg-background"
+                  />
+                  <input
+                    defaultValue={subject.code}
+                    onBlur={(e) => {
+                      if (e.target.value !== subject.code)
+                        action(() => updateSubject(subject.id, { code: e.target.value }));
+                    }}
+                    aria-label="Code"
+                    className="shrink-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-24"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    defaultValue={subject.chapters}
+                    onBlur={(e) => {
+                      const val = Number(e.target.value);
+                      if (val !== subject.chapters)
+                        action(() => updateSubject(subject.id, { chapters: val }));
+                    }}
+                    aria-label="Chapters"
+                    className="shrink-0 rounded-lg border border-transparent bg-transparent px-1 py-1 text-xs text-muted outline-none focus:border-border focus:bg-background sm:w-16"
+                  />
+                  <select
+                    defaultValue={subject.difficulty}
+                    onChange={(e) =>
+                      action(() =>
+                        updateSubject(subject.id, { difficulty: e.target.value as Difficulty }),
+                      )
+                    }
+                    aria-label="Difficulty"
+                    className="shrink-0 rounded-lg border border-border bg-background px-2 py-1 text-xs sm:w-24"
+                  >
+                    {difficulties.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+                  <Link
+                    href={`/${slug}/${subject.id}`}
+                    className="rounded-full border border-border px-4 py-1.5 text-sm font-medium transition-colors hover-primary"
+                  >
+                    Resources
+                  </Link>
+                  <button
+                    onClick={() => handleDeleteSubject(subject.id)}
+                    aria-label="Delete subject"
+                    className="no-red-hover flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

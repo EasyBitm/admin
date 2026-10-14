@@ -74,7 +74,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div className="border-b border-border">
-        <div className="mx-auto flex w-full max-w-4xl items-center justify-end gap-3 px-6 py-2 text-sm text-muted">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-end gap-3 px-6 py-2 text-sm text-muted">
           <span className="truncate">{session?.user.email}</span>
           <button
             onClick={() => void signOut()}
